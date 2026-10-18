@@ -117,8 +117,13 @@ function historyHints(history, topic) {
   };
 }
 
-function craftBossReply({ tone, userText, history }) {
+function gf(gender, m, f) {
+  return gender === "f" ? f : m;
+}
+
+function craftBossReply({ tone, gender, userText, history }) {
   const t = tone || "passive";
+  const sex = gender === "f" ? "f" : "m";
   const heat = heatOf(userText);
   const topics = topicsOf(userText);
   const topic = topics[0] || "general";
@@ -137,10 +142,10 @@ function craftBossReply({ tone, userText, history }) {
   };
 
   const fn = builders[t] || buildPassive;
-  let line = fn({ topic, heat, intent, hints, used });
+  let line = fn({ topic, heat, intent, hints, used, gender: sex });
   if (heat >= 2 && t !== "silent") line = withMat(line, spice);
   if (used.has(line)) {
-    line = fn({ topic, heat: Math.min(4, heat + 1), intent, hints, used, alt: true });
+    line = fn({ topic, heat: Math.min(4, heat + 1), intent, hints, used, gender: sex, alt: true });
     if (heat >= 2 && t !== "silent") line = withMat(line, spice);
   }
 
@@ -150,7 +155,7 @@ function craftBossReply({ tone, userText, history }) {
   };
 }
 
-function buildPassive({ topic, heat, intent, hints, used, alt }) {
+function buildPassive({ topic, heat, intent, hints, used, gender, alt }) {
   const cue = topicCue(topic);
   const openers = [];
 
@@ -169,7 +174,7 @@ function buildPassive({ topic, heat, intent, hints, used, alt }) {
   } else if (intent === "boundary") {
     openers.push(
       `Граница ясна. Не буду делать вид, что ${cue} — это «просто так вышло».`,
-      `Ок, ты не пожарный. По ${cue} перераспределим, а не «ну ты же справишься».`
+      `Ок, ты не ${gf(gender, "пожарный", "пожарная")}. По ${cue} перераспределим, а не «ну ты же справишься».`
     );
   } else if (intent === "ask") {
     openers.push(
@@ -234,12 +239,12 @@ function buildBureaucrat({ topic, intent, hints, used }) {
   return pick(lines, used);
 }
 
-function buildGaslight({ topic, heat, intent, hints, used }) {
+function buildGaslight({ topic, heat, intent, hints, used, gender }) {
   const cue = topicCue(topic);
   const lines = [
-    `Мне кажется, ты накрутил(а) историю про ${cue}.`,
+    `Мне кажется, ты ${gf(gender, "накрутил", "накрутила")} историю про ${cue}.`,
     `Странно. Обычно ты спокойнее про ${cue} говоришь.`,
-    `Никто тебя жёстко не ставил по ${cue}. Ты сам(а) так решил(а).`,
+    `Никто тебя жёстко не ставил по ${cue}. Ты ${gf(gender, "сам так решил", "сама так решила")}.`,
     `Давай без театра. Перечитай спокойно — и станет яснее.`,
   ];
   if (heat >= 2) {

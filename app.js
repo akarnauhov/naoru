@@ -12,39 +12,64 @@ const TONES = [
   { id: "silent", title: "Молчун", blurb: "Коротко, иногда с матом", status: "был(а) недавно" },
 ];
 
-const APOLOGY = {
-  passive: "Пожалуй, я был неправ. Ты тянешь больше, чем видно — а я отвечал криво.",
-  toxic: "Извини. Без тебя этот хаос бы не взлетел. Я прикрывался «командой» вместо спасибо.",
-  bureaucrat: "Фиксирую: претензии справедливы. Извини, что прятался за регламенты.",
-  gaslight: "Извини. Я обесценивал. Ты был(а) прав(а) — тебе не казалось.",
-  micro: "Сорри, что дышал в затылок. Ты и так на уровне.",
-  silent: "…извини. ты ок. правда. я молчал, когда надо было поддержать.",
-};
+function g(m, f) {
+  return state.gender === "f" ? f : m;
+}
 
-const PRAISE = {
-  passive: "Честно: на тебя можно опереться, когда остальные расползаются. Это редкость.",
-  toxic: "Ты — тот человек, из‑за которого цели вообще реалистичны. Не слоган, а факт.",
-  bureaucrat: "По качеству и срокам ты стабильно выше среднего. Это стоит сказать прямо.",
-  gaslight: "Ты внимательный(ая) и держишь реальность, когда вокруг туман. Так и есть.",
-  micro: "Ты самоходный профессионал. Мне стоило доверять раньше.",
-  silent: "спасибо, что тянешь. я это вижу. ты важен(важна).",
-};
+function apologyFor(tone) {
+  const map = {
+    passive: "Пожалуй, я был неправ. Ты тянешь больше, чем видно — а я отвечал криво.",
+    toxic: "Извини. Без тебя этот хаос бы не взлетел. Я прикрывался «командой» вместо спасибо.",
+    bureaucrat: "Фиксирую: претензии справедливы. Извини, что прятался за регламенты.",
+    gaslight: g(
+      "Извини. Я обесценивал. Ты был прав — тебе не казалось.",
+      "Извини. Я обесценивал. Ты была права — тебе не казалось."
+    ),
+    micro: "Сорри, что дышал в затылок. Ты и так на уровне.",
+    silent: "…извини. ты ок. правда. я молчал, когда надо было поддержать.",
+  };
+  return map[tone] || map.passive;
+}
 
-const YELLS = [
-  "Мне плевать на ваш «синк»",
-  "Хватит двигать дедлайны",
-  "Я не ваш личный пожарный",
-  "Хватит обесценивать",
-  "Это не срочно — это ваша тревога",
-  "Перестаньте писать в 23:40",
-  "Да блять, нормально ставьте задачи",
-  "Какого хуя опять всё на мне?",
-  "Пиздец, а не управление",
-  "Я устал(а) спасать ваш бардак",
-];
+function praiseFor(tone) {
+  const map = {
+    passive: "Честно: на тебя можно опереться, когда остальные расползаются. Это редкость.",
+    toxic: "Ты — тот человек, из‑за которого цели вообще реалистичны. Не слоган, а факт.",
+    bureaucrat: "По качеству и срокам ты стабильно выше среднего. Это стоит сказать прямо.",
+    gaslight: g(
+      "Ты внимательный и держишь реальность, когда вокруг туман. Так и есть.",
+      "Ты внимательная и держишь реальность, когда вокруг туман. Так и есть."
+    ),
+    micro: g(
+      "Ты самоходный профессионал. Мне стоило доверять раньше.",
+      "Ты самоходная профессионалка. Мне стоило доверять раньше."
+    ),
+    silent: g(
+      "спасибо, что тянешь. я это вижу. ты важен.",
+      "спасибо, что тянешь. я это вижу. ты важна."
+    ),
+  };
+  return map[tone] || map.passive;
+}
+
+function yellsFor() {
+  return [
+    "Мне плевать на ваш «синк»",
+    "Хватит двигать дедлайны",
+    g("Я не ваш личный пожарный", "Я не ваша личная пожарная"),
+    "Хватит обесценивать",
+    "Это не срочно — это ваша тревога",
+    "Перестаньте писать в 23:40",
+    "Да блять, нормально ставьте задачи",
+    "Какого хуя опять всё на мне?",
+    "Пиздец, а не управление",
+    g("Я устал спасать ваш бардак", "Я устала спасать ваш бардак"),
+  ];
+}
 
 const state = {
   bossName: "Руководитель",
+  gender: null,
   tone: null,
   steam: 100,
   finaleStarted: false,
@@ -117,6 +142,7 @@ function craftReply(userText) {
   if (window.NaoruBrain && typeof window.NaoruBrain.craftBossReply === "function") {
     const out = window.NaoruBrain.craftBossReply({
       tone: state.tone,
+      gender: state.gender,
       userText,
       history: state.history,
     });
@@ -124,6 +150,27 @@ function craftReply(userText) {
     return { text: String(out), replyTo: "" };
   }
   return { text: "Понял. Давай без крика — по фактам.", replyTo: "" };
+}
+
+function renderGender() {
+  const box = $("#gender");
+  box.innerHTML = "";
+  [
+    { id: "m", label: "Мужской" },
+    { id: "f", label: "Женский" },
+  ].forEach((opt) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "gender-btn" + (state.gender === opt.id ? " active" : "");
+    btn.textContent = opt.label;
+    btn.addEventListener("click", () => {
+      state.gender = opt.id;
+      renderGender();
+      renderYells();
+      syncStart();
+    });
+    box.appendChild(btn);
+  });
 }
 
 function renderTones() {
@@ -146,7 +193,7 @@ function renderTones() {
 function renderYells() {
   const box = $("#yells");
   box.innerHTML = "";
-  YELLS.forEach((y) => {
+  yellsFor().forEach((y) => {
     const b = document.createElement("button");
     b.type = "button";
     b.className = "yell-chip";
@@ -158,7 +205,7 @@ function renderYells() {
 
 function syncStart() {
   const name = $("#bossName").value.trim();
-  $("#startBtn").disabled = !(name.length >= 2 && state.tone);
+  $("#startBtn").disabled = !(state.gender && name.length >= 2 && state.tone);
 }
 
 function clearPending() {
@@ -171,10 +218,10 @@ function clearPending() {
 function openingLine() {
   const map = {
     passive: "Ну привет. Надеюсь, это по делу.",
-    toxic: "Хей! Готов(а) к продуктивному дню?",
+    toxic: g("Хей! Готов к продуктивному дню?", "Хей! Готова к продуктивному дню?"),
     bureaucrat: "Добрый день. Пишите по форме.",
     gaslight: "Привет. Всё спокойно?",
-    micro: "Привет. Статус с утра видел(а)?",
+    micro: g("Привет. Статус с утра видел?", "Привет. Статус с утра видела?"),
     silent: "привет",
   };
   return map[state.tone] || map.passive;
@@ -245,8 +292,8 @@ function startFinale(manual) {
   setStatus("печатает…", "typing");
   addMsg("— пауза —", "sys");
 
-  const sorry = APOLOGY[state.tone] || APOLOGY.passive;
-  const praise = PRAISE[state.tone] || PRAISE.passive;
+  const sorry = apologyFor(state.tone);
+  const praise = praiseFor(state.tone);
 
   setTimeout(() => {
     addMsg(sorry, "in");
@@ -296,6 +343,7 @@ $("#enoughBtn").addEventListener("click", () => startFinale(true));
 $("#againBtn").addEventListener("click", openChat);
 $("#homeBtn").addEventListener("click", () => show("setup"));
 
+renderGender();
 renderTones();
 renderYells();
 show("setup");

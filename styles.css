@@ -148,6 +148,31 @@ h2 {
   text-transform: uppercase;
 }
 
+.gender {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 22px;
+}
+
+.gender-btn {
+  appearance: none;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--ink);
+  border-radius: 14px;
+  padding: 14px 16px;
+  font: 600 0.98rem var(--font);
+  cursor: pointer;
+}
+
+.gender-btn:hover { border-color: #3d4b5c; }
+
+.gender-btn.active {
+  border-color: var(--amber);
+  background: linear-gradient(90deg, var(--amber-dim), transparent 70%);
+}
+
 .tones {
   display: grid;
   gap: 8px;
