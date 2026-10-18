@@ -8,35 +8,40 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles.css?v=3" />
 </head>
 <body>
   <div class="noise" aria-hidden="true"></div>
 
-  <section class="screen" id="setup">
+  <section class="screen is-on" id="setup">
     <div class="setup-inner">
       <p class="brand">НАОРУ</p>
       <h1>Наори на руководителя.<br />Никто не услышит.</h1>
-      <p class="sub">Фейковый чат. Ноль отправок. В конце — извинения и похвала. Для нервов, не для HR.</p>
+
+      <div class="how">
+        <p><b>Что это.</b> Тренажёр для нервов: фейковый мессенджер, куда можно выплеснуть всё, что копилось на созвонах и в чатах.</p>
+        <p><b>Как пользоваться.</b> Впиши имя, выбери тон ответов, пиши сам или жми готовые фразы. Шкала «пар» падает. Когда надоест — «Хватит».</p>
+        <p><b>Важно.</b> Сообщения <u>никуда не отправляются</u>. В конце руководитель всегда извинится и похвалит — чисто для катарсиса.</p>
+      </div>
 
       <label class="field">
-        <span>Как зовут</span>
+        <span>Имя руководителя</span>
         <input id="bossName" type="text" maxlength="40" placeholder="например: Сергей" autocomplete="off" />
       </label>
 
-      <p class="field-label">Тон ответов</p>
+      <p class="field-label">Тон его ответов</p>
       <div class="tones" id="tones"></div>
 
       <button type="button" class="btn primary" id="startBtn" disabled>Открыть чат</button>
-      <p class="fine">Это симулятор. Сообщения не покидают браузер.</p>
+      <p class="fine">Симулятор · local only · 0 писем в HR</p>
     </div>
   </section>
 
-  <section class="screen chat-screen" id="chat" hidden>
+  <section class="screen chat-screen" id="chat">
     <header class="chat-top">
       <div class="who">
         <button type="button" class="back" id="backBtn" aria-label="Назад">←</button>
-        <div>
+        <div class="who-text">
           <p class="who-name" id="whoName">Руководитель</p>
           <p class="who-status" id="whoStatus">онлайн · private</p>
         </div>
@@ -47,19 +52,19 @@
       </div>
     </header>
 
-    <div class="thread" id="thread" aria-live="polite"></div>
+    <div class="thread" id="thread"></div>
 
     <div class="composer">
       <div class="yells" id="yells"></div>
-      <form id="sendForm" class="send-row">
+      <div class="send-row">
         <input id="msgInput" type="text" maxlength="280" placeholder="Напиши, что накипело…" autocomplete="off" />
-        <button type="submit" class="btn send">ОР</button>
-      </form>
+        <button type="button" class="btn send" id="sendBtn">ОР</button>
+      </div>
       <button type="button" class="btn enough" id="enoughBtn">Хватит. Хочу извинений</button>
     </div>
   </section>
 
-  <section class="screen" id="finale" hidden>
+  <section class="screen" id="finale">
     <div class="finale-inner">
       <p class="brand dim">НАОРУ</p>
       <p class="finale-kicker" id="finaleKicker">0 сообщений отправлено</p>
@@ -72,6 +77,6 @@
     </div>
   </section>
 
-  <script src="app.js" defer></script>
+  <script src="app.js?v=3" defer></script>
 </body>
 </html>
