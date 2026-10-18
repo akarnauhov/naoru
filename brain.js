@@ -121,14 +121,91 @@ function gf(gender, m, f) {
   return gender === "f" ? f : m;
 }
 
-function craftBossReply({ tone, gender, userText, history }) {
+function splitBits(text) {
+  return String(text || "")
+    .split(/[\n;•|]+/)
+    .map((s) => s.replace(/^[-–—]\s*/, "").trim())
+    .filter((s) => s.length >= 3);
+}
+
+function sceneHook(brief) {
+  const clean = String(brief || "").replace(/\s+/g, " ").trim();
+  if (!clean) return "эту ситуацию";
+  if (clean.length <= 56) return clean;
+  const cut = clean.slice(0, 56);
+  const sp = cut.lastIndexOf(" ");
+  return (sp > 24 ? cut.slice(0, sp) : cut).trim() + "…";
+}
+
+function buildCustom({ topic, heat, intent, hints, used, gender, scenario }) {
+  const brief = (scenario && scenario.brief) || "";
+  const style = (scenario && scenario.style) || "";
+  const hook = sceneHook(brief);
+  const styleBits = splitBits(style);
+  const catchPhrase = styleBits.length ? rand(styleBits) : "";
+  const cue = topicCue(topic);
+  const lines = [];
+
+  if (catchPhrase && catchPhrase.length < 90) {
+    lines.push(catchPhrase);
+    if (!/[.!?…]$/.test(catchPhrase)) {
+      lines.push(`${catchPhrase}.`);
+    }
+  }
+
+  if (hints.stuck) {
+    lines.push(
+      `Снова про это. Я понял: ${hook} — не разовый всплеск.`,
+      `Мы уже крутим одну и ту же пластинку. Давай по ${cue} без театра.`
+    );
+  }
+
+  if (intent === "demand") {
+    lines.push(
+      `Слышу стоп. По сценарию у нас ${hook} — давай конкретнее, что меняем.`,
+      `Ок, стоп принят. Но ${hook} само не рассосётся.`
+    );
+  } else if (intent === "boundary") {
+    lines.push(
+      `Границу услышал. Не буду делать вид, что ${hook} — «просто так вышло».`,
+      `Понял. Ты не ${gf(gender, "пожарный", "пожарная")}. По ${cue} пересоберём ожидания.`
+    );
+  } else if (intent === "ask") {
+    lines.push(
+      `Спрашиваешь напрямую — отвечаю в рамках ситуации: ${hook}.`,
+      `Вопрос услышал. По ${cue} давай без воды.`
+    );
+  } else if (heat >= 3) {
+    lines.push(
+      `Ор услышал. Похоже, накопилось именно из‑за: ${hook}.`,
+      `Жёстко. По ${cue} претензия по существу — тон оставляю тебе.`
+    );
+  } else {
+    lines.push(
+      `Принял. Звучит как про ${hook}.`,
+      `Ок. Держим в фокусе: ${hook}.`,
+      `Услышал. По ${cue} не отмажусь одной фразой.`,
+      styleBits.length
+        ? `Смотри, как я это вижу: ${rand(styleBits).replace(/\.$/, "")}.`
+        : `Давай по ${cue} — коротко и по делу.`
+    );
+  }
+
+  if (catchPhrase && heat >= 2) {
+    lines.push(`${catchPhrase.replace(/\.$/, "")}. И всё равно нужен статус по ${cue}.`);
+  }
+
+  return pick(lines, used);
+}
+
+function craftBossReply({ tone, gender, userText, history, scenario }) {
   const t = tone || "passive";
   const sex = gender === "f" ? "f" : "m";
   const heat = heatOf(userText);
   const topics = topicsOf(userText);
-  const topic = topics[0] || "general";
+  const topic = topics[0] || topicsOf((scenario && scenario.brief) || "")[0] || "general";
   const intent = intentOf(userText);
-  const spice = matSpice(heat, t);
+  const spice = matSpice(heat, t === "custom" ? "passive" : t);
   const hints = historyHints(history || [], topic);
   const used = new Set((history || []).filter((m) => m.role === "boss").slice(-6).map((m) => m.text));
 
@@ -140,13 +217,15 @@ function craftBossReply({ tone, gender, userText, history }) {
     micro: buildMicro,
     kpi: buildKpi,
     silent: buildSilent,
+    custom: buildCustom,
   };
 
   const fn = builders[t] || buildPassive;
-  let line = fn({ topic, heat, intent, hints, used, gender: sex });
+  const ctx = { topic, heat, intent, hints, used, gender: sex, scenario };
+  let line = fn(ctx);
   if (heat >= 2 && t !== "silent") line = withMat(line, spice);
   if (used.has(line)) {
-    line = fn({ topic, heat: Math.min(4, heat + 1), intent, hints, used, gender: sex, alt: true });
+    line = fn({ ...ctx, heat: Math.min(4, heat + 1), alt: true });
     if (heat >= 2 && t !== "silent") line = withMat(line, spice);
   }
 

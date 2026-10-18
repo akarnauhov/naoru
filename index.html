@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=7" />
+  <link rel="stylesheet" href="styles.css?v=8" />
 </head>
 <body>
   <div class="noise" aria-hidden="true"></div>
@@ -20,7 +20,8 @@
 
       <div class="mode-switch" role="tablist" aria-label="Режим">
         <button type="button" class="mode-btn active" data-mode="chat" id="modeChat">Чат</button>
-        <button type="button" class="mode-btn" data-mode="translator" id="modeTranslator">Переводчик с мата</button>
+        <button type="button" class="mode-btn" data-mode="scenario" id="modeScenario">Свой сценарий</button>
+        <button type="button" class="mode-btn" data-mode="translator" id="modeTranslator">Переводчик</button>
       </div>
 
       <div class="how" id="howChat">
@@ -29,9 +30,14 @@
         <p><b>Важно.</b> Сообщения <u>никуда не отправляются</u>. В конце — извинение и похвала. Без API: ум работает в браузере.</p>
       </div>
 
+      <div class="how" id="howScenario" hidden>
+        <p><b>Свой сценарий.</b> Опиши ситуацию и как босс обычно отвечает — чат сыграет твою историю, а не готовый тон.</p>
+        <p><b>Можно задать</b> первую реплику, извинение, похвалу и свои кнопки-ор. Всё остаётся в браузере.</p>
+      </div>
+
       <div class="how" id="howTranslator" hidden>
         <p><b>Что это.</b> Орёшь матом — получаешь письмо «Уважаемые коллеги…». Смысл тот же, тон — для почты и чата с HR.</p>
-        <p><b>Как.</b> Вставь текст слева (ну, как в голове). Справа — нормальный вариант. Можно скопировать. Никуда не уходит.</p>
+        <p><b>Как.</b> Вставь текст. Справа — нормальный вариант. Можно скопировать. Никуда не уходит.</p>
       </div>
 
       <div id="chatSetup">
@@ -48,6 +54,49 @@
 
         <button type="button" class="btn primary" id="startBtn" disabled>Открыть чат</button>
         <p class="fine">Симулятор · local only · 0 писем в HR</p>
+      </div>
+
+      <div id="scenarioSetup" hidden>
+        <p class="field-label">Ты</p>
+        <div class="gender" id="genderSc" role="group" aria-label="Пол"></div>
+
+        <label class="field">
+          <span>Имя руководителя</span>
+          <input id="scBossName" type="text" maxlength="40" placeholder="например: Ольга" autocomplete="off" />
+        </label>
+
+        <label class="field">
+          <span>Ситуация / о чём ор</span>
+          <textarea id="scBrief" rows="3" maxlength="500" placeholder="Например: снова скинули чужой дедлайн в пятницу вечером и ждут чуда к понедельнику"></textarea>
+        </label>
+
+        <label class="field">
+          <span>Как он обычно отвечает</span>
+          <textarea id="scStyle" rows="3" maxlength="500" placeholder="Коротко, давит срочностью, говорит «это не обсуждается», любит фразы про команду и приоритеты"></textarea>
+        </label>
+
+        <label class="field">
+          <span>Первая реплика <span class="field-hint">(необязательно)</span></span>
+          <input id="scHello" type="text" maxlength="160" placeholder="Ну что, успеем к понедельнику?" autocomplete="off" />
+        </label>
+
+        <label class="field">
+          <span>Извинение в финале <span class="field-hint">(необязательно)</span></span>
+          <input id="scSorry" type="text" maxlength="200" placeholder="Извини. Я давил сроками вместо нормального плана." autocomplete="off" />
+        </label>
+
+        <label class="field">
+          <span>Похвала в финале <span class="field-hint">(необязательно)</span></span>
+          <input id="scPraise" type="text" maxlength="200" placeholder="Без тебя этот пожар бы не потушили." autocomplete="off" />
+        </label>
+
+        <label class="field">
+          <span>Твои быстрые ор-кнопки <span class="field-hint">(по строке)</span></span>
+          <textarea id="scYells" rows="3" maxlength="400" placeholder="Хватит кидать дедлайны в пятницу&#10;Я не ваш пожарный&#10;Какого хуя опять без плана?"></textarea>
+        </label>
+
+        <button type="button" class="btn primary" id="startScenarioBtn" disabled>Запустить сценарий</button>
+        <p class="fine">Сценарий сохраняется в этом браузере</p>
       </div>
 
       <div id="translatorSetup" hidden>
@@ -128,8 +177,8 @@
     </div>
   </section>
 
-  <script src="brain.js?v=7" defer></script>
-  <script src="translator.js?v=7" defer></script>
-  <script src="app.js?v=7" defer></script>
+  <script src="brain.js?v=8" defer></script>
+  <script src="translator.js?v=8" defer></script>
+  <script src="app.js?v=8" defer></script>
 </body>
 </html>

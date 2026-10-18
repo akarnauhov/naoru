@@ -18,6 +18,13 @@ function g(m, f) {
 }
 
 function apologyFor(tone) {
+  if (tone === "custom" && state.scenario && state.scenario.sorry) {
+    return state.scenario.sorry;
+  }
+  if (tone === "custom" && state.scenario && state.scenario.brief) {
+    const hook = state.scenario.brief.replace(/\s+/g, " ").trim().slice(0, 70);
+    return `Извини. Я вёл себя криво в ситуации: ${hook}${hook.length >= 70 ? "…" : ""}.`;
+  }
   const map = {
     passive: "Пожалуй, я был неправ. Ты тянешь больше, чем видно — а я отвечал криво.",
     toxic: "Извини. Без тебя этот хаос бы не взлетел. Я прикрывался «командой» вместо спасибо.",
@@ -34,6 +41,15 @@ function apologyFor(tone) {
 }
 
 function praiseFor(tone) {
+  if (tone === "custom" && state.scenario && state.scenario.praise) {
+    return state.scenario.praise;
+  }
+  if (tone === "custom") {
+    return g(
+      "Ты держишь реальность, когда вокруг хаос. Это видно — и это ценно.",
+      "Ты держишь реальность, когда вокруг хаос. Это видно — и это ценно."
+    );
+  }
   const map = {
     passive: "Честно: на тебя можно опереться, когда остальные расползаются. Это редкость.",
     toxic: "Ты — тот человек, из‑за которого цели вообще реалистичны. Не слоган, а факт.",
@@ -70,6 +86,8 @@ function yellsFor() {
   ];
 }
 
+const SC_KEY = "naoru_scenario_v1";
+
 const state = {
   bossName: "Руководитель",
   gender: null,
@@ -80,6 +98,7 @@ const state = {
   history: [],
   setupMode: "chat",
   lastTranslation: "",
+  scenario: null,
 };
 
 const $ = (s) => document.querySelector(s);
@@ -151,6 +170,7 @@ function craftReply(userText) {
       gender: state.gender,
       userText,
       history: state.history,
+      scenario: state.scenario,
     });
     if (out && typeof out === "object") return out;
     return { text: String(out), replyTo: "" };
@@ -174,8 +194,10 @@ function renderGenderInto(boxId) {
       state.gender = opt.id;
       renderGenderInto("#gender");
       renderGenderInto("#genderTr");
+      renderGenderInto("#genderSc");
       renderYells();
       syncStart();
+      syncScenarioStart();
       syncTranslatorStart();
     });
     box.appendChild(btn);
@@ -185,17 +207,75 @@ function renderGenderInto(boxId) {
 function renderGender() {
   renderGenderInto("#gender");
   renderGenderInto("#genderTr");
+  renderGenderInto("#genderSc");
 }
 
 function setSetupMode(mode) {
   state.setupMode = mode;
   const chat = mode === "chat";
+  const scenario = mode === "scenario";
+  const translator = mode === "translator";
   $("#modeChat").classList.toggle("active", chat);
-  $("#modeTranslator").classList.toggle("active", !chat);
+  $("#modeScenario").classList.toggle("active", scenario);
+  $("#modeTranslator").classList.toggle("active", translator);
   $("#howChat").hidden = !chat;
-  $("#howTranslator").hidden = chat;
+  $("#howScenario").hidden = !scenario;
+  $("#howTranslator").hidden = !translator;
   $("#chatSetup").hidden = !chat;
-  $("#translatorSetup").hidden = chat;
+  $("#scenarioSetup").hidden = !scenario;
+  $("#translatorSetup").hidden = !translator;
+}
+
+function readScenarioForm() {
+  return {
+    bossName: ($("#scBossName").value || "").trim(),
+    brief: ($("#scBrief").value || "").trim(),
+    style: ($("#scStyle").value || "").trim(),
+    hello: ($("#scHello").value || "").trim(),
+    sorry: ($("#scSorry").value || "").trim(),
+    praise: ($("#scPraise").value || "").trim(),
+    yells: ($("#scYells").value || "")
+      .split("\n")
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .slice(0, 12),
+  };
+}
+
+function fillScenarioForm(data) {
+  if (!data) return;
+  if (data.bossName) $("#scBossName").value = data.bossName;
+  if (data.brief) $("#scBrief").value = data.brief;
+  if (data.style) $("#scStyle").value = data.style;
+  if (data.hello) $("#scHello").value = data.hello;
+  if (data.sorry) $("#scSorry").value = data.sorry;
+  if (data.praise) $("#scPraise").value = data.praise;
+  if (data.yells && data.yells.length) $("#scYells").value = data.yells.join("\n");
+}
+
+function saveScenarioLocal(data) {
+  try {
+    localStorage.setItem(SC_KEY, JSON.stringify(data));
+  } catch (_) {
+    /* ignore */
+  }
+}
+
+function loadScenarioLocal() {
+  try {
+    const raw = localStorage.getItem(SC_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch (_) {
+    return null;
+  }
+}
+
+function syncScenarioStart() {
+  const btn = $("#startScenarioBtn");
+  if (!btn) return;
+  const sc = readScenarioForm();
+  btn.disabled = !(state.gender && sc.bossName.length >= 2 && sc.brief.length >= 8 && sc.style.length >= 8);
 }
 
 function syncTranslatorStart() {
@@ -265,7 +345,11 @@ function renderTones() {
 function renderYells() {
   const box = $("#yells");
   box.innerHTML = "";
-  yellsFor().forEach((y) => {
+  const list =
+    state.tone === "custom" && state.scenario && state.scenario.yells && state.scenario.yells.length
+      ? state.scenario.yells
+      : yellsFor();
+  list.forEach((y) => {
     const b = document.createElement("button");
     b.type = "button";
     b.className = "yell-chip";
@@ -288,6 +372,15 @@ function clearPending() {
 }
 
 function openingLine() {
+  if (state.tone === "custom" && state.scenario) {
+    if (state.scenario.hello) return state.scenario.hello;
+    const bits = String(state.scenario.style || "")
+      .split(/[\n;]+/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+    if (bits.length) return bits[0].replace(/\.$/, "") + (bits[0].endsWith("?") ? "" : ".");
+    return "Ну что, по делу?";
+  }
   const map = {
     passive: "Ну привет. Надеюсь, это по делу.",
     toxic: g("Хей! Готов к продуктивному дню?", "Хей! Готова к продуктивному дню?"),
@@ -303,24 +396,49 @@ function openingLine() {
   return map[state.tone] || map.passive;
 }
 
-function openChat() {
+function beginChat({ bossName, toneId, statusText, sysHint }) {
   clearPending();
-  state.bossName = $("#bossName").value.trim() || "Руководитель";
+  state.bossName = bossName || "Руководитель";
+  state.tone = toneId;
   state.steam = 100;
   state.finaleStarted = false;
   state.history = [];
   setSteam(100);
   $("#whoName").textContent = state.bossName;
-  const tone = TONES.find((t) => t.id === state.tone);
-  setStatus(tone ? tone.status : "онлайн · private", "busy");
+  setStatus(statusText || "онлайн · private", "busy");
   $("#thread").innerHTML = "";
   addMsg("private · сообщения не покидают браузер", "sys");
-  addMsg(state.bossName + " отвечает по смыслу твоих фраз (и может с матом, если орёшь).", "sys");
+  addMsg(sysHint || state.bossName + " отвечает по смыслу твоих фраз.", "sys");
+  renderYells();
   const hello = openingLine();
   addMsg(hello, "in");
   pushHistory("boss", hello);
   show("chat");
   $("#msgInput").focus();
+}
+
+function openChat() {
+  state.scenario = null;
+  const tone = TONES.find((t) => t.id === state.tone);
+  beginChat({
+    bossName: $("#bossName").value.trim() || "Руководитель",
+    toneId: state.tone,
+    statusText: tone ? tone.status : "онлайн · private",
+    sysHint: ( $("#bossName").value.trim() || "Руководитель") + " отвечает по смыслу твоих фраз (и может с матом, если орёшь).",
+  });
+}
+
+function openScenarioChat() {
+  const sc = readScenarioForm();
+  if (!(state.gender && sc.bossName.length >= 2 && sc.brief.length >= 8 && sc.style.length >= 8)) return;
+  saveScenarioLocal(sc);
+  state.scenario = sc;
+  beginChat({
+    bossName: sc.bossName,
+    toneId: "custom",
+    statusText: "по твоему сценарию",
+    sysHint: "Сценарий: " + sc.brief.slice(0, 120) + (sc.brief.length > 120 ? "…" : ""),
+  });
 }
 
 function sendYou(text) {
@@ -356,8 +474,12 @@ function scheduleBossReply(userText) {
     const { text, replyTo } = craftReply(userText);
     addMsg(text, "in", { replyTo });
     pushHistory("boss", text);
-    const tone = TONES.find((t) => t.id === state.tone);
-    setStatus(tone ? tone.status : "онлайн", "busy");
+    if (state.tone === "custom") {
+      setStatus("по твоему сценарию", "busy");
+    } else {
+      const tone = TONES.find((t) => t.id === state.tone);
+      setStatus(tone ? tone.status : "онлайн", "busy");
+    }
   }, delay);
 }
 
@@ -416,10 +538,14 @@ $("#msgInput").addEventListener("keydown", (e) => {
   }
 });
 $("#enoughBtn").addEventListener("click", () => startFinale(true));
-$("#againBtn").addEventListener("click", openChat);
+$("#againBtn").addEventListener("click", () => {
+  if (state.tone === "custom" && state.scenario) openScenarioChat();
+  else openChat();
+});
 $("#homeBtn").addEventListener("click", () => show("setup"));
 
 $("#modeChat").addEventListener("click", () => setSetupMode("chat"));
+$("#modeScenario").addEventListener("click", () => setSetupMode("scenario"));
 $("#modeTranslator").addEventListener("click", () => setSetupMode("translator"));
 $("#openTranslatorBtn").addEventListener("click", openTranslator);
 $("#trBackBtn").addEventListener("click", () => show("setup"));
@@ -432,9 +558,18 @@ $("#trIn").addEventListener("keydown", (e) => {
   }
 });
 
+$("#startScenarioBtn").addEventListener("click", openScenarioChat);
+["scBossName", "scBrief", "scStyle", "scHello", "scSorry", "scPraise", "scYells"].forEach((id) => {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.addEventListener("input", syncScenarioStart);
+});
+
 renderGender();
 renderTones();
 renderYells();
+fillScenarioForm(loadScenarioLocal());
 setSetupMode("chat");
 syncTranslatorStart();
+syncScenarioStart();
 show("setup");

@@ -61,9 +61,35 @@ body {
 
 .mode-switch {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, 1fr);
   gap: 8px;
   margin-bottom: 18px;
+}
+
+.field textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  background: var(--bg-2);
+  color: var(--ink);
+  border-radius: 12px;
+  padding: 14px 16px;
+  font: 500 1rem var(--font);
+  line-height: 1.45;
+  resize: vertical;
+  min-height: 88px;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.field textarea:focus {
+  outline: 2px solid rgba(227, 162, 58, 0.35);
+  border-color: var(--amber);
+}
+
+@media (max-width: 600px) {
+  .mode-switch {
+    grid-template-columns: 1fr;
+  }
 }
 
 .mode-btn {
@@ -72,8 +98,8 @@ body {
   background: var(--panel);
   color: var(--muted);
   border-radius: 12px;
-  padding: 12px 14px;
-  font: 600 0.88rem var(--font);
+  padding: 11px 10px;
+  font: 600 0.8rem var(--font);
   cursor: pointer;
 }
 
