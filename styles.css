@@ -52,10 +52,43 @@ body {
 }
 
 .setup-inner,
-.finale-inner {
+.finale-inner,
+.translator-inner {
   width: min(100%, 540px);
   margin: 0 auto;
   padding: 40px 22px 40px;
+}
+
+.mode-switch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.mode-btn {
+  appearance: none;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--muted);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font: 600 0.88rem var(--font);
+  cursor: pointer;
+}
+
+.mode-btn.active {
+  color: var(--ink);
+  border-color: var(--amber);
+  background: linear-gradient(90deg, var(--amber-dim), transparent 70%);
+}
+
+.field-hint {
+  text-transform: none;
+  letter-spacing: 0;
+  font-family: var(--font);
+  font-weight: 400;
+  opacity: 0.75;
 }
 
 .brand {
@@ -504,6 +537,79 @@ h2 {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+}
+
+.translator-screen.is-on {
+  display: block;
+}
+
+.translator-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.translator-title {
+  margin: 4px 0 0;
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+.tr-block {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 16px;
+  font-size: 0.82rem;
+  color: var(--muted);
+  font-family: var(--mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.tr-block textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  background: var(--bg-2);
+  color: var(--ink);
+  border-radius: 14px;
+  padding: 14px 16px;
+  font: 500 1rem var(--font);
+  line-height: 1.45;
+  resize: vertical;
+  min-height: 140px;
+}
+
+.tr-block textarea:focus {
+  outline: 2px solid rgba(227, 162, 58, 0.35);
+  border-color: var(--amber);
+}
+
+.tr-out {
+  border: 1px solid rgba(95, 173, 126, 0.35);
+  background: #1e3228;
+  color: var(--ink);
+  border-radius: 14px;
+  padding: 16px;
+  font: 500 0.98rem/1.55 var(--font);
+  white-space: pre-wrap;
+  text-transform: none;
+  letter-spacing: 0;
+  font-family: var(--font);
+  min-height: 140px;
+}
+
+.tr-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.tr-actions .btn.primary,
+.tr-actions .btn.ghost {
+  width: auto;
+  flex: 1 1 140px;
 }
 
 @media (max-width: 600px) {

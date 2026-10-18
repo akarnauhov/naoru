@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=6" />
+  <link rel="stylesheet" href="styles.css?v=7" />
 </head>
 <body>
   <div class="noise" aria-hidden="true"></div>
@@ -18,25 +18,73 @@
       <p class="brand">НАОРУ</p>
       <h1>Наори на руководителя.<br />Никто не услышит.</h1>
 
-      <div class="how">
+      <div class="mode-switch" role="tablist" aria-label="Режим">
+        <button type="button" class="mode-btn active" data-mode="chat" id="modeChat">Чат</button>
+        <button type="button" class="mode-btn" data-mode="translator" id="modeTranslator">Переводчик с мата</button>
+      </div>
+
+      <div class="how" id="howChat">
         <p><b>Что это.</b> Тренажёр для нервов: фейковый мессенджер, куда можно выплеснуть всё, что копилось на созвонах и в чатах.</p>
         <p><b>Как пользоваться.</b> Пол → имя → тон → орёшь текстом или кнопками. Он отвечает <u>по смыслу</u> твоей фразы (сроки, ночь, нагрузка…) и может ответить с матом, если ор жёсткий.</p>
         <p><b>Важно.</b> Сообщения <u>никуда не отправляются</u>. В конце — извинение и похвала. Без API: ум работает в браузере.</p>
       </div>
 
-      <p class="field-label">Ты</p>
-      <div class="gender" id="gender" role="group" aria-label="Пол"></div>
+      <div class="how" id="howTranslator" hidden>
+        <p><b>Что это.</b> Орёшь матом — получаешь письмо «Уважаемые коллеги…». Смысл тот же, тон — для почты и чата с HR.</p>
+        <p><b>Как.</b> Вставь текст слева (ну, как в голове). Справа — нормальный вариант. Можно скопировать. Никуда не уходит.</p>
+      </div>
 
-      <label class="field">
-        <span>Имя руководителя</span>
-        <input id="bossName" type="text" maxlength="40" placeholder="например: Сергей" autocomplete="off" />
+      <div id="chatSetup">
+        <p class="field-label">Ты</p>
+        <div class="gender" id="gender" role="group" aria-label="Пол"></div>
+
+        <label class="field">
+          <span>Имя руководителя</span>
+          <input id="bossName" type="text" maxlength="40" placeholder="например: Сергей" autocomplete="off" />
+        </label>
+
+        <p class="field-label">Тон его ответов</p>
+        <div class="tones" id="tones"></div>
+
+        <button type="button" class="btn primary" id="startBtn" disabled>Открыть чат</button>
+        <p class="fine">Симулятор · local only · 0 писем в HR</p>
+      </div>
+
+      <div id="translatorSetup" hidden>
+        <p class="field-label">Ты <span class="field-hint">(для «признателен / признательна»)</span></p>
+        <div class="gender" id="genderTr" role="group" aria-label="Пол"></div>
+        <button type="button" class="btn primary" id="openTranslatorBtn" disabled>Открыть переводчик</button>
+        <p class="fine">local only · копируй сам · 0 писем</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="screen translator-screen" id="translator">
+    <div class="translator-inner">
+      <header class="translator-top">
+        <button type="button" class="back" id="trBackBtn" aria-label="Назад">←</button>
+        <div>
+          <p class="brand dim" style="margin:0">НАОРУ</p>
+          <p class="translator-title">Мат → корпоративный</p>
+        </div>
+      </header>
+
+      <label class="tr-block">
+        <span>Как орёшь</span>
+        <textarea id="trIn" rows="6" maxlength="800" placeholder="Ебтвою мать, я вчера сказал до конца дня — какого хуя ещё не готово…"></textarea>
       </label>
 
-      <p class="field-label">Тон его ответов</p>
-      <div class="tones" id="tones"></div>
+      <div class="tr-actions">
+        <button type="button" class="btn primary" id="trGoBtn">Перевести</button>
+        <button type="button" class="btn ghost" id="trCopyBtn" disabled>Скопировать</button>
+      </div>
 
-      <button type="button" class="btn primary" id="startBtn" disabled>Открыть чат</button>
-      <p class="fine">Симулятор · local only · 0 писем в HR</p>
+      <div class="tr-block">
+        <span>Как можно написать</span>
+        <div class="tr-out" id="trOut">Уважаемые коллеги…</div>
+      </div>
+
+      <p class="fine">Смысл сохраняем. Мат выкидываем. Никуда не отправляем.</p>
     </div>
   </section>
 
@@ -80,7 +128,8 @@
     </div>
   </section>
 
-  <script src="brain.js?v=6" defer></script>
-  <script src="app.js?v=6" defer></script>
+  <script src="brain.js?v=7" defer></script>
+  <script src="translator.js?v=7" defer></script>
+  <script src="app.js?v=7" defer></script>
 </body>
 </html>

@@ -138,6 +138,7 @@ function craftBossReply({ tone, gender, userText, history }) {
     bureaucrat: buildBureaucrat,
     gaslight: buildGaslight,
     micro: buildMicro,
+    kpi: buildKpi,
     silent: buildSilent,
   };
 
@@ -275,6 +276,26 @@ function buildMicro({ topic, heat, intent, hints, used }) {
   }
   if (hints.stuck) {
     lines.push(`Тема ${cue} уже второй круг. Дай факты — закроем или эскалируем.`);
+  }
+  return pick(lines, used);
+}
+
+function buildKpi({ topic, heat, intent, hints, used }) {
+  const cue = topicCue(topic);
+  const lines = [
+    `Ок, эмоции later. Какие цифры по ${cue} за этот спринт?`,
+    `Без KPI разговор пустой. Покажи метрику по ${cue} — и поговорим.`,
+    `Я смотрю на дашборд. Где дельта по ${cue}? Цель / факт / gap.`,
+    `Эффективность = измеримость. По ${cue} нужен один ключевой показатель и тренд.`,
+  ];
+  if (heat >= 2) {
+    lines.push(`Слышу пар. Всё равно: KPI по ${cue} и комментарий в одну строку.`);
+  }
+  if (intent === "boundary" || intent === "demand") {
+    lines.push(`Границу принял. Но без цифр по ${cue} я не могу защитить ресурс наверху.`);
+  }
+  if (hints.stuck) {
+    lines.push(`Снова ${cue} без цифр. Давай закроем метрикой, иначе крутимся.`);
   }
   return pick(lines, used);
 }

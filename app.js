@@ -9,6 +9,7 @@ const TONES = [
   { id: "bureaucrat", title: "Бюрократ", blurb: "Тикеты и регламент", status: "в документообороте" },
   { id: "gaslight", title: "Газлайт", blurb: "«Тебе кажется»", status: "онлайн · спокойствие" },
   { id: "micro", title: "Микроменеджер", blurb: "Скрины и ETA", status: "смотрит в монитор" },
+  { id: "kpi", title: "Эффективный менеджер", blurb: "KPI, цифры, метрики", status: "в дашборде" },
   { id: "silent", title: "Молчун", blurb: "Коротко, иногда с матом", status: "был(а) недавно" },
 ];
 
@@ -26,6 +27,7 @@ function apologyFor(tone) {
       "Извини. Я обесценивал. Ты была права — тебе не казалось."
     ),
     micro: "Сорри, что дышал в затылок. Ты и так на уровне.",
+    kpi: "Извини. Я прятался за KPI вместо нормального разговора. Ты больше, чем метрика.",
     silent: "…извини. ты ок. правда. я молчал, когда надо было поддержать.",
   };
   return map[tone] || map.passive;
@@ -44,6 +46,7 @@ function praiseFor(tone) {
       "Ты самоходный профессионал. Мне стоило доверять раньше.",
       "Ты самоходная профессионалка. Мне стоило доверять раньше."
     ),
+    kpi: "Твои цифры — следствие, а не причина. Ты тянешь результат там, где таблица молчит.",
     silent: g(
       "спасибо, что тянешь. я это вижу. ты важен.",
       "спасибо, что тянешь. я это вижу. ты важна."
@@ -75,13 +78,16 @@ const state = {
   finaleStarted: false,
   pendingTimer: null,
   history: [],
+  setupMode: "chat",
+  lastTranslation: "",
 };
 
 const $ = (s) => document.querySelector(s);
 
 function show(id) {
-  ["setup", "chat", "finale"].forEach((key) => {
-    $(`#${key}`).classList.toggle("is-on", key === id);
+  ["setup", "chat", "finale", "translator"].forEach((key) => {
+    const el = $(`#${key}`);
+    if (el) el.classList.toggle("is-on", key === id);
   });
 }
 
@@ -152,8 +158,9 @@ function craftReply(userText) {
   return { text: "Понял. Давай без крика — по фактам.", replyTo: "" };
 }
 
-function renderGender() {
-  const box = $("#gender");
+function renderGenderInto(boxId) {
+  const box = $(boxId);
+  if (!box) return;
   box.innerHTML = "";
   [
     { id: "m", label: "Мужской" },
@@ -165,12 +172,77 @@ function renderGender() {
     btn.textContent = opt.label;
     btn.addEventListener("click", () => {
       state.gender = opt.id;
-      renderGender();
+      renderGenderInto("#gender");
+      renderGenderInto("#genderTr");
       renderYells();
       syncStart();
+      syncTranslatorStart();
     });
     box.appendChild(btn);
   });
+}
+
+function renderGender() {
+  renderGenderInto("#gender");
+  renderGenderInto("#genderTr");
+}
+
+function setSetupMode(mode) {
+  state.setupMode = mode;
+  const chat = mode === "chat";
+  $("#modeChat").classList.toggle("active", chat);
+  $("#modeTranslator").classList.toggle("active", !chat);
+  $("#howChat").hidden = !chat;
+  $("#howTranslator").hidden = chat;
+  $("#chatSetup").hidden = !chat;
+  $("#translatorSetup").hidden = chat;
+}
+
+function syncTranslatorStart() {
+  const btn = $("#openTranslatorBtn");
+  if (btn) btn.disabled = !state.gender;
+}
+
+function openTranslator() {
+  if (!state.gender) return;
+  state.lastTranslation = "";
+  $("#trOut").textContent = "Уважаемые коллеги…";
+  $("#trCopyBtn").disabled = true;
+  show("translator");
+  $("#trIn").focus();
+}
+
+function runTranslate() {
+  const raw = $("#trIn").value;
+  if (!window.NaoruTranslator) {
+    $("#trOut").textContent = "Переводчик не загрузился. Обнови страницу.";
+    return;
+  }
+  const out = window.NaoruTranslator.translateMatGendered(raw, state.gender);
+  if (out.empty) {
+    $("#trOut").textContent = "Сначала вставь ор слева.";
+    $("#trCopyBtn").disabled = true;
+    state.lastTranslation = "";
+    return;
+  }
+  state.lastTranslation = out.text;
+  $("#trOut").textContent = out.text;
+  $("#trCopyBtn").disabled = false;
+}
+
+async function copyTranslation() {
+  if (!state.lastTranslation) return;
+  try {
+    await navigator.clipboard.writeText(state.lastTranslation);
+    const btn = $("#trCopyBtn");
+    const prev = btn.textContent;
+    btn.textContent = "Скопировано";
+    setTimeout(() => {
+      btn.textContent = prev;
+    }, 1200);
+  } catch (_) {
+    /* ignore */
+  }
 }
 
 function renderTones() {
@@ -222,6 +294,10 @@ function openingLine() {
     bureaucrat: "Добрый день. Пишите по форме.",
     gaslight: "Привет. Всё спокойно?",
     micro: g("Привет. Статус с утра видел?", "Привет. Статус с утра видела?"),
+    kpi: g(
+      "Привет. Какие цифры за сегодня? KPI в дашборде смотрел?",
+      "Привет. Какие цифры за сегодня? KPI в дашборде смотрела?"
+    ),
     silent: "привет",
   };
   return map[state.tone] || map.passive;
@@ -343,7 +419,22 @@ $("#enoughBtn").addEventListener("click", () => startFinale(true));
 $("#againBtn").addEventListener("click", openChat);
 $("#homeBtn").addEventListener("click", () => show("setup"));
 
+$("#modeChat").addEventListener("click", () => setSetupMode("chat"));
+$("#modeTranslator").addEventListener("click", () => setSetupMode("translator"));
+$("#openTranslatorBtn").addEventListener("click", openTranslator);
+$("#trBackBtn").addEventListener("click", () => show("setup"));
+$("#trGoBtn").addEventListener("click", runTranslate);
+$("#trCopyBtn").addEventListener("click", copyTranslation);
+$("#trIn").addEventListener("keydown", (e) => {
+  if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+    e.preventDefault();
+    runTranslate();
+  }
+});
+
 renderGender();
 renderTones();
 renderYells();
+setSetupMode("chat");
+syncTranslatorStart();
 show("setup");
