@@ -1,125 +1,16 @@
 /**
  * НАОРУ — фейковый чат с руководителем.
+ * Ответы собирает brain.js из контекста реплики и истории.
  */
 
 const TONES = [
-  { id: "passive", title: "Пассивно-агрессивный", blurb: "«Как удобно», язвительные паузы", status: "онлайн · не беспокоить" },
-  { id: "toxic", title: "Токсичный оптимист", blurb: "«Мы команда», челленджи и 🚀", status: "на волне · always on" },
-  { id: "bureaucrat", title: "Бюрократ", blurb: "Тикеты, согласования, EOD", status: "в документообороте" },
-  { id: "gaslight", title: "Газлайт", blurb: "«Ты слишком эмоционально»", status: "онлайн · спокойствие" },
-  { id: "micro", title: "Микроменеджер", blurb: "Скрины, ETA, контроль", status: "смотрит в монитор" },
-  { id: "silent", title: "Молчун", blurb: "Долгий typing… потом «ок»", status: "был(а) недавно" },
+  { id: "passive", title: "Пассивно-агрессивный", blurb: "Ехидство + намёки", status: "онлайн · не беспокоить" },
+  { id: "toxic", title: "Токсичный оптимист", blurb: "Челленджи и «команда»", status: "на волне · always on" },
+  { id: "bureaucrat", title: "Бюрократ", blurb: "Тикеты и регламент", status: "в документообороте" },
+  { id: "gaslight", title: "Газлайт", blurb: "«Тебе кажется»", status: "онлайн · спокойствие" },
+  { id: "micro", title: "Микроменеджер", blurb: "Скрины и ETA", status: "смотрит в монитор" },
+  { id: "silent", title: "Молчун", blurb: "Коротко, иногда с матом", status: "был(а) недавно" },
 ];
-
-const REPLIES = {
-  passive: [
-    "Ок. Забавно, что это всплывает именно сейчас.",
-    "Я всё понял. Просто ожидал другого приоритета с твоей стороны.",
-    "Можно и так. Обычно мы договариваемся иначе — но ладно.",
-    "Спасибо за… обратную связь. Запишу куда-нибудь.",
-    "Тон, конечно, спорный. Но услышал.",
-    "Интересно. А дедлайны при этом сами себя подвинут?",
-    "Хм. Я думал, мы на одной волне. Видимо, нет.",
-    "Если это срочно, странно, что раньше молчал(а).",
-    "Понял твоё недовольство. Оно довольно громкое.",
-    "Хорошо. Будем считать, что ты высказался(ась).",
-  ],
-  toxic: [
-    "Люблю эту энергию! Давай завернём в win-win.",
-    "Мы команда. Через такое становятся сильнее!",
-    "Это челлендж роста, если посмотреть под углом.",
-    "Огонь. Сохрани драйв до пятничного демо.",
-    "Понимаю. Но цель же амбициозная — и это круто.",
-    "Супер, что неравнодушен(на). Так рождаются прорывы.",
-    "Вайб поймал. Теперь конвертируем в результат!",
-    "Тяжело? Значит, зона роста рядом.",
-    "Спасибо, что горишь. Без пассионариев никуда.",
-    "Давай после этого синк на позитиве устроим.",
-  ],
-  bureaucrat: [
-    "Оформите претензию комментарием в задаче, пожалуйста.",
-    "Вынесем на синк. Текущий статус: в работе.",
-    "Без тикета эскалировать не могу. Процесс.",
-    "Нужен апдейт статуса до EOD и ссылка на док.",
-    "Это вне скоупа текущего спринта.",
-    "Добавьте пункт в протокол — иначе не зафиксируем.",
-    "Жду письмо с темой и копией руководителю направления.",
-    "Согласно регламенту, сначала L1, потом эскалация.",
-    "Переоткройте задачу с правильным лейблом.",
-    "Календарь на следующую неделю уже плотный.",
-  ],
-  gaslight: [
-    "Ты сейчас слишком эмоционально это подаёшь.",
-    "Я такого не говорил. Ты, наверное, не так услышал(а).",
-    "Странно. Обычно ты спокойнее.",
-    "Может, просто тяжёлый день? Не надо персонализировать.",
-    "Мы же нормально общались. Откуда вдруг шторм?",
-    "Давай без драмы. Я всегда был открыт к диалогу.",
-    "Мне кажется, ты преувеличиваешь масштаб.",
-    "Никто тебя не обвинял. Ты сам(а) так решил(а).",
-    "Может, перечитаешь переписку? Там всё иначе.",
-    "Я за конструктив. Давай без ярлыков.",
-  ],
-  micro: [
-    "Скинь скрин, где именно затык. Прямо сейчас.",
-    "Почему это не было в статусе в 9:01?",
-    "Нужны пункты, ETA и риски. В одном сообщении.",
-    "Я просто рядом проконтролирую детали.",
-    "Перешли черновик, даже сырой. Хочу видеть ход.",
-    "Давай ещё раз чеклист пройдёмся вместе.",
-    "А кто апрувил этот подход? Есть тред?",
-    "Напиши, чем занят(а) последние 40 минут.",
-    "Сделай короткий апдейт каждые полчаса, ок?",
-    "Я открою файл и поправлю пару мелочей сам.",
-  ],
-  silent: [
-    "ок",
-    "в работе",
-    "понял",
-    "…",
-    "мм",
-    "принято",
-    "позже",
-    "ага",
-    "видно",
-    "разберёмся",
-  ],
-};
-
-const KEYWORD_REPLIES = {
-  срок: {
-    passive: "Сроки — штука гибкая. Особенно когда эмоции горячие.",
-    toxic: "Дедлайн — это мотиватор! Мы успеем, если зарядимся.",
-    bureaucrat: "Перенос срока возможен через заявку на изменение.",
-    gaslight: "Срок всегда был понятен. Ты просто сейчас накрутил(а).",
-    micro: "Какой точный ETA по часам? И почему сдвиг?",
-    silent: "срок ок",
-  },
-  зарплат: {
-    passive: "О kompensации лучше не в таком тоне, тебе не кажется?",
-    toxic: "Про ценность поговорим! Ты часть success story.",
-    bureaucrat: "Вопросы оплаты — через HR-тикет, не через этот канал.",
-    gaslight: "Никто не обещал того, что тебе померещилось.",
-    micro: "Сначала закроем KPI, потом разговор про деньги.",
-    silent: "не здесь",
-  },
-  ноч: {
-    passive: "Ночные сообщения — знак вовлечённости. Или нет?",
-    toxic: "Иногда магия случается после 23:00!",
-    bureaucrat: "В нерабочее время ответы не гарантируются.",
-    gaslight: "Я написал(а) нормально. Ты сам(а) решил(а) отвечать.",
-    micro: "Если дедлайн горит — время условно.",
-    silent: "увидел",
-  },
-  созвон: {
-    passive: "Созвон можно. Если найдёшь слот в моём календаре.",
-    toxic: "Давай созвон! Синхронизируем энергию.",
-    bureaucrat: "Поставьте встречу с повесткой и целями.",
-    gaslight: "Созвон не обязателен. Ты просто избегаешь письма.",
-    micro: "Созвон на 15 минут. С демо экрана.",
-    silent: "созвон позже",
-  },
-};
 
 const APOLOGY = {
   passive: "Пожалуй, я был неправ. Ты тянешь больше, чем видно — а я отвечал криво.",
@@ -143,13 +34,13 @@ const YELLS = [
   "Мне плевать на ваш «синк»",
   "Хватит двигать дедлайны",
   "Я не ваш личный пожарный",
-  "Нормально ставьте задачи",
   "Хватит обесценивать",
-  "Я устал(а) спасать бардак",
   "Это не срочно — это ваша тревога",
   "Перестаньте писать в 23:40",
-  "Хватит угадывать за меня",
-  "Довольно микровмешательства",
+  "Да блять, нормально ставьте задачи",
+  "Какого хуя опять всё на мне?",
+  "Пиздец, а не управление",
+  "Я устал(а) спасать ваш бардак",
 ];
 
 const state = {
@@ -157,8 +48,8 @@ const state = {
   tone: null,
   steam: 100,
   finaleStarted: false,
-  usedReplies: new Set(),
   pendingTimer: null,
+  history: [],
 };
 
 const $ = (s) => document.querySelector(s);
@@ -198,26 +89,20 @@ function setStatus(text, cls) {
   el.className = "who-status" + (cls ? " " + cls : "");
 }
 
-function pickReply(userText) {
-  const tone = state.tone || "passive";
-  const lower = (userText || "").toLowerCase();
+function pushHistory(role, text) {
+  state.history.push({ role, text, at: Date.now() });
+  if (state.history.length > 40) state.history.shift();
+}
 
-  for (const key of Object.keys(KEYWORD_REPLIES)) {
-    if (lower.includes(key)) {
-      const line = KEYWORD_REPLIES[key][tone];
-      if (line && !state.usedReplies.has("kw:" + key + tone)) {
-        state.usedReplies.add("kw:" + key + tone);
-        return line;
-      }
-    }
+function craftReply(userText) {
+  if (window.NaoruBrain && typeof window.NaoruBrain.craftBossReply === "function") {
+    return window.NaoruBrain.craftBossReply({
+      tone: state.tone,
+      userText,
+      history: state.history,
+    });
   }
-
-  const pool = REPLIES[tone] || REPLIES.passive;
-  const free = pool.filter((line) => !state.usedReplies.has(line));
-  const line = free.length ? rand(free) : rand(pool);
-  state.usedReplies.add(line);
-  if (state.usedReplies.size > 40) state.usedReplies.clear();
-  return line;
+  return "Понял. Давай без крика — по фактам.";
 }
 
 function renderTones() {
@@ -262,24 +147,6 @@ function clearPending() {
   }
 }
 
-function openChat() {
-  clearPending();
-  state.bossName = $("#bossName").value.trim() || "Руководитель";
-  state.steam = 100;
-  state.finaleStarted = false;
-  state.usedReplies = new Set();
-  setSteam(100);
-  $("#whoName").textContent = state.bossName;
-  const tone = TONES.find((t) => t.id === state.tone);
-  setStatus(tone ? tone.status : "онлайн · private", "busy");
-  $("#thread").innerHTML = "";
-  addMsg("private · сообщения не покидают браузер", "sys");
-  addMsg(state.bossName + " в чате. Можно начинать.", "sys");
-  addMsg(openingLine(), "in");
-  show("chat");
-  $("#msgInput").focus();
-}
-
 function openingLine() {
   const map = {
     passive: "Ну привет. Надеюсь, это по делу.",
@@ -292,27 +159,59 @@ function openingLine() {
   return map[state.tone] || map.passive;
 }
 
+function openChat() {
+  clearPending();
+  state.bossName = $("#bossName").value.trim() || "Руководитель";
+  state.steam = 100;
+  state.finaleStarted = false;
+  state.history = [];
+  setSteam(100);
+  $("#whoName").textContent = state.bossName;
+  const tone = TONES.find((t) => t.id === state.tone);
+  setStatus(tone ? tone.status : "онлайн · private", "busy");
+  $("#thread").innerHTML = "";
+  addMsg("private · сообщения не покидают браузер", "sys");
+  addMsg(state.bossName + " отвечает по смыслу твоих фраз (и может с матом, если орёшь).", "sys");
+  const hello = openingLine();
+  addMsg(hello, "in");
+  pushHistory("boss", hello);
+  show("chat");
+  $("#msgInput").focus();
+}
+
 function sendYou(text) {
   const msg = String(text || "").trim();
   if (!msg || state.finaleStarted) return;
 
   addMsg(msg, "out");
-  setSteam(state.steam - rand([9, 11, 13, 15]));
+  pushHistory("user", msg);
+
+  const heat = window.NaoruBrain ? window.NaoruBrain.heatOf(msg) : 1;
+  setSteam(state.steam - (8 + heat * 3 + rand([0, 1, 2])));
   $("#msgInput").value = "";
   scheduleBossReply(msg);
 
   if (state.steam <= 15) {
-    state.pendingTimer = setTimeout(() => startFinale(false), 1000);
+    state.pendingTimer = setTimeout(() => startFinale(false), 1100);
   }
 }
 
 function scheduleBossReply(userText) {
   clearPending();
-  const delay = state.tone === "silent" ? rand([1400, 2000, 2800]) : rand([500, 800, 1100, 1400]);
+  const heat = window.NaoruBrain ? window.NaoruBrain.heatOf(userText) : 0;
+  const delay =
+    state.tone === "silent"
+      ? rand([1200, 1800, 2600])
+      : heat >= 3
+        ? rand([400, 700, 1000])
+        : rand([550, 900, 1300]);
+
   setStatus("печатает…", "typing");
   state.pendingTimer = setTimeout(() => {
     if (state.finaleStarted) return;
-    addMsg(pickReply(userText), "in");
+    const line = craftReply(userText);
+    addMsg(line, "in");
+    pushHistory("boss", line);
     const tone = TONES.find((t) => t.id === state.tone);
     setStatus(tone ? tone.status : "онлайн", "busy");
   }, delay);
@@ -325,15 +224,18 @@ function startFinale(manual) {
   setStatus("печатает…", "typing");
   addMsg("— пауза —", "sys");
 
+  const sorry = APOLOGY[state.tone] || APOLOGY.passive;
+  const praise = PRAISE[state.tone] || PRAISE.passive;
+
   setTimeout(() => {
-    addMsg(APOLOGY[state.tone] || APOLOGY.passive, "in");
+    addMsg(sorry, "in");
     const el = $("#thread").lastElementChild;
     if (el) el.classList.add("msg-soft");
     setStatus("онлайн", "");
   }, 900);
 
   setTimeout(() => {
-    addMsg(PRAISE[state.tone] || PRAISE.passive, "in");
+    addMsg(praise, "in");
     const el = $("#thread").lastElementChild;
     if (el) el.classList.add("msg-soft");
   }, 2000);
@@ -344,10 +246,10 @@ function startFinale(manual) {
     quotes.innerHTML = "";
     const a = document.createElement("div");
     a.className = "msg msg-in msg-soft";
-    a.textContent = APOLOGY[state.tone] || APOLOGY.passive;
+    a.textContent = sorry;
     const b = document.createElement("div");
     b.className = "msg msg-in msg-soft";
-    b.textContent = PRAISE[state.tone] || PRAISE.passive;
+    b.textContent = praise;
     quotes.append(a, b);
     $("#finaleTitle").textContent = manual ? "Извинения получены" : "Пар вышел";
     $("#finaleKicker").textContent = "0 сообщений отправлено · " + state.bossName;
