@@ -149,12 +149,14 @@ function rand(arr) {
 
 function scrollThread() {
   const t = $("#thread");
-  t.scrollTop = t.scrollHeight;
+  requestAnimationFrame(() => {
+    t.scrollTop = t.scrollHeight;
+  });
 }
 
 function addBubble(text, who, extraClass = "") {
   const el = document.createElement("div");
-  el.className = `bubble ${who}${extraClass ? ` ${extraClass}` : ""}`;
+  el.className = ["bubble", who, extraClass].filter(Boolean).join(" ");
   el.textContent = text;
   $("#thread").appendChild(el);
   scrollThread();

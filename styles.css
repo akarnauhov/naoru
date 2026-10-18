@@ -232,12 +232,14 @@ h2 {
 /* chat */
 .chat-screen {
   display: grid;
-  grid-template-rows: auto 1fr auto;
+  grid-template-rows: auto minmax(0, 1fr) auto;
   height: 100dvh;
+  max-height: 100dvh;
   max-width: 720px;
   margin: 0 auto;
-  background: rgba(14, 17, 20, 0.72);
+  background: rgba(14, 17, 20, 0.92);
   border-inline: 1px solid var(--line);
+  overflow: hidden;
 }
 
 .chat-top {
@@ -317,7 +319,10 @@ h2 {
 }
 
 .thread {
-  overflow: auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   padding: 18px 16px 12px;
   display: flex;
   flex-direction: column;
@@ -333,23 +338,25 @@ h2 {
   animation: pop 0.28s ease both;
   white-space: pre-wrap;
   word-break: break-word;
+  color: var(--ink);
 }
 
 .bubble.you {
   align-self: flex-end;
-  background: var(--you);
+  background: #e56b33;
   color: #fff;
   border-bottom-right-radius: 5px;
+  box-shadow: 0 8px 24px rgba(196, 92, 42, 0.35);
 }
 
 .bubble.you.yell {
-  animation: shake 0.35s ease both;
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12);
+  animation: pop 0.28s ease both, shake 0.35s ease;
 }
 
 .bubble.boss {
   align-self: flex-start;
-  background: var(--boss);
+  background: #243040;
+  color: var(--ink);
   border: 1px solid var(--line);
   border-bottom-left-radius: 5px;
 }
