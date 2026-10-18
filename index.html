@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>НАОРУ — выпусти пар. Никто не узнает.</title>
+  <meta name="description" content="Фейковый чат с руководителем: наори, выпусти пар. Сообщения никуда не уходят. В конце он извинится и похвалит." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="noise" aria-hidden="true"></div>
+
+  <section class="screen" id="setup">
+    <div class="setup-inner">
+      <p class="brand">НАОРУ</p>
+      <h1>Наори на руководителя.<br />Никто не услышит.</h1>
+      <p class="sub">Фейковый чат. Ноль отправок. В конце — извинения и похвала. Для нервов, не для HR.</p>
+
+      <label class="field">
+        <span>Как зовут</span>
+        <input id="bossName" type="text" maxlength="40" placeholder="например: Сергей" autocomplete="off" />
+      </label>
+
+      <p class="field-label">Тон ответов</p>
+      <div class="tones" id="tones"></div>
+
+      <button type="button" class="btn primary" id="startBtn" disabled>Открыть чат</button>
+      <p class="fine">Это симулятор. Сообщения не покидают браузер.</p>
+    </div>
+  </section>
+
+  <section class="screen chat-screen" id="chat" hidden>
+    <header class="chat-top">
+      <div class="who">
+        <button type="button" class="back" id="backBtn" aria-label="Назад">←</button>
+        <div>
+          <p class="who-name" id="whoName">Руководитель</p>
+          <p class="who-status" id="whoStatus">онлайн · private</p>
+        </div>
+      </div>
+      <div class="steam-wrap" title="Уровень пара">
+        <span>пар</span>
+        <div class="steam"><i id="steamBar"></i></div>
+      </div>
+    </header>
+
+    <div class="thread" id="thread" aria-live="polite"></div>
+
+    <div class="composer">
+      <div class="yells" id="yells"></div>
+      <form id="sendForm" class="send-row">
+        <input id="msgInput" type="text" maxlength="280" placeholder="Напиши, что накипело…" autocomplete="off" />
+        <button type="submit" class="btn send">ОР</button>
+      </form>
+      <button type="button" class="btn enough" id="enoughBtn">Хватит. Хочу извинений</button>
+    </div>
+  </section>
+
+  <section class="screen" id="finale" hidden>
+    <div class="finale-inner">
+      <p class="brand dim">НАОРУ</p>
+      <p class="finale-kicker" id="finaleKicker">0 сообщений отправлено</p>
+      <h2 id="finaleTitle">Легче?</h2>
+      <div class="finale-quotes" id="finaleQuotes"></div>
+      <div class="actions">
+        <button type="button" class="btn ghost" id="againBtn">Ещё раунд</button>
+        <button type="button" class="btn primary" id="homeBtn">К выбору тона</button>
+      </div>
+    </div>
+  </section>
+
+  <script src="app.js" defer></script>
+</body>
+</html>
