@@ -69,10 +69,29 @@ function scrollThread() {
   t.scrollTop = t.scrollHeight;
 }
 
-function addMsg(text, type) {
+function addMsg(text, type, opts) {
   const el = document.createElement("div");
   el.className = "msg msg-" + type;
-  el.textContent = text;
+
+  const replyTo = opts && opts.replyTo;
+  if (replyTo && type === "in") {
+    const quote = document.createElement("div");
+    quote.className = "msg-reply";
+    const name = document.createElement("span");
+    name.className = "msg-reply-name";
+    name.textContent = "Вы";
+    const prev = document.createElement("span");
+    prev.className = "msg-reply-text";
+    prev.textContent = replyTo;
+    quote.append(name, prev);
+    el.appendChild(quote);
+  }
+
+  const body = document.createElement("div");
+  body.className = "msg-body";
+  body.textContent = text;
+  el.appendChild(body);
+
   $("#thread").appendChild(el);
   scrollThread();
   return el;
@@ -96,13 +115,15 @@ function pushHistory(role, text) {
 
 function craftReply(userText) {
   if (window.NaoruBrain && typeof window.NaoruBrain.craftBossReply === "function") {
-    return window.NaoruBrain.craftBossReply({
+    const out = window.NaoruBrain.craftBossReply({
       tone: state.tone,
       userText,
       history: state.history,
     });
+    if (out && typeof out === "object") return out;
+    return { text: String(out), replyTo: "" };
   }
-  return "Понял. Давай без крика — по фактам.";
+  return { text: "Понял. Давай без крика — по фактам.", replyTo: "" };
 }
 
 function renderTones() {
@@ -209,9 +230,9 @@ function scheduleBossReply(userText) {
   setStatus("печатает…", "typing");
   state.pendingTimer = setTimeout(() => {
     if (state.finaleStarted) return;
-    const line = craftReply(userText);
-    addMsg(line, "in");
-    pushHistory("boss", line);
+    const { text, replyTo } = craftReply(userText);
+    addMsg(text, "in", { replyTo });
+    pushHistory("boss", text);
     const tone = TONES.find((t) => t.id === state.tone);
     setStatus(tone ? tone.status : "онлайн", "busy");
   }, delay);
